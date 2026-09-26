@@ -1,0 +1,8 @@
+{
+  "WifiSsid": "YOUR_2.4_GHZ_WIFI_NAME",
+  "WifiPassword": "YOUR_WIFI_PASSWORD",
+  "ClientId": "fdf23722ce37489e9cdeff1594d9cb61",
+  "RedirectUri": "http://127.0.0.1:8000/callback",
+  "RefreshToken": "",
+  "AuthorizedClientId": ""
+}

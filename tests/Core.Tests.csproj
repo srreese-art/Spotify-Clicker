@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>disable</ImplicitUsings><Nullable>disable</Nullable><DefineConstants>DESKTOP_TEST</DefineConstants></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../NanoDevice/Core/*.cs" Link="Core/%(Filename)%(Extension)" />
+    <Compile Include="../NanoDevice/DeviceOptions.cs" Link="DeviceOptions.cs" />
+    <Compile Include="../NanoDevice/SettingsCipher.cs" Link="SettingsCipher.cs" />
+    <Compile Include="../NanoDevice/Spotify/SpotifyService.cs" Link="SpotifyService.cs" />
+    <Compile Include="../NanoDevice/Spotify/Models.cs" Link="Models.cs" />
+  </ItemGroup>
+</Project>
