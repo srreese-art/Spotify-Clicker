@@ -11,7 +11,11 @@ This replaces the earlier phone/hotspot/static-website setup. The ESP32 starts d
 
 Set each button GPIO using the named constants in `NanoDevice/DeviceOptions.cs`: PlayPauseButtonPin, NextTrackButtonPin, PreviousTrackButtonPin, VolumeUpButtonPin, and VolumeDownButtonPin. Defaults are 25, 26, 27, 32, and 33 respectively. Connect each switch to its GPIO and GND. There is no single-button test mode.
 
+Playback status and token renewal run in a separate background loop with at least 10 seconds between completed normal checks. Button presses use cached status and send only the action request. Successful volume and play/pause actions update the cache immediately; volume changes by 10 percentage points per press or held-button repeat. External changes are picked up on the next successful background check. Until the first check succeeds, or when status is more than 60 seconds old, commands are discarded with a message to press again shortly. Normal checks also wait for an empty command queue and two seconds without button activity or command completion. Held buttons defer normal polling. Startup and stale or invalid status allow recovery checks; failed checks retry after three seconds. `PlaybackPollMs`, `PlaybackPollIdleMs`, `PlaybackPollRetryMs`, and `PlaybackStateMaxAgeMs` control these intervals. Both connections honor Spotify rate-limit delays.
+
 ## Change settings
+
+Background checks and actions share one network slot to avoid overlapping HTTPS connections on the ESP32. A press arriving during a status request waits for that request to finish; it never starts its own status lookup. Waiting commands take priority over starting another poll. If a request stalls long enough for a queued command to expire, press again after connectivity recovers.
 
 Edit the private config, run `./Setup-PC.ps1`, rebuild and redeploy. Ordinary reruns reuse the saved authorization. After Spotify revokes access, or when changing the Spotify account, run `./Setup-PC.ps1 -Authorize` for a fresh approval, then rebuild and deploy.
 

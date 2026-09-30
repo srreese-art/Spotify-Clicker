@@ -39,7 +39,14 @@ namespace SpotifyClicker.Spotify
             _stage = stage;
             Console.WriteLine("Spotify HTTPS: " + stage + ".");
         }
-        public long BlockedUntil { get; private set; }
+        // Both the polling and command connections honor server backoff.
+        private static long _blockedUntil;
+        private static readonly object BackoffSync = new object();
+        public long BlockedUntil
+        {
+            get { lock (BackoffSync) { return _blockedUntil; } }
+            private set { lock (BackoffSync) { if (value > _blockedUntil) _blockedUntil = value; } }
+        }
         public bool Available { get { return Clock.IsSynchronized && Clock.Milliseconds >= BlockedUntil; } }
         public Reply Send(string url, string method, string body, string accessToken)
         {
@@ -48,7 +55,8 @@ namespace SpotifyClicker.Spotify
             long started = Clock.Milliseconds;
             try
             {
-                Stage(accessToken == null ? "starting token request" : "starting playback request");
+                Stage(accessToken == null ? "starting token request" :
+                    (method == "GET" ? "starting background playback status request" : "starting playback action " + method));
                 using (HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url))
                 {
                     request.Method = method; request.Timeout = 10000; request.ReadWriteTimeout = 10000;

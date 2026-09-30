@@ -15,6 +15,7 @@ namespace SpotifyClicker.Core
     {
         private readonly Command[] _items = new Command[DeviceOptions.QueueCapacity];
         private int _count;
+        public bool HasPending { get { lock (this) { return _count > 0; } } }
         public void Clear() { lock (this) { for (int i = 0; i < _count; i++) _items[i] = null; _count = 0; } }
         public void Push(Command item)
         {

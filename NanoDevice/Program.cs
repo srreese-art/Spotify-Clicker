@@ -34,6 +34,7 @@ namespace SpotifyClicker
                 SpotifyService spotify = new SpotifyService(store, network);
                 CommandQueue queue = new CommandQueue();
                 new Thread(() => RunPlayback(spotify, queue)).Start();
+                new Thread(() => RunPlaybackStatus(spotify, queue)).Start();
 
                 stage = "reading buttons";
                 RunButtons(network, spotify, queue);
@@ -48,7 +49,6 @@ namespace SpotifyClicker
 
         private static void RunPlayback(SpotifyService spotify, CommandQueue queue)
         {
-            long maintainAt = 0;
             while (true)
             {
                 if (!spotify.CanAcceptCommands) queue.Clear();
@@ -58,12 +58,16 @@ namespace SpotifyClicker
                     if (command != null) spotify.Execute(command);
                 }
 
-                if (Clock.Milliseconds >= maintainAt)
-                {
-                    spotify.MaintainAuthorization();
-                    maintainAt = Clock.Milliseconds + 30000;
-                }
                 Thread.Sleep(25);
+            }
+        }
+
+        private static void RunPlaybackStatus(SpotifyService spotify, CommandQueue queue)
+        {
+            while (true)
+            {
+                spotify.PollPlaybackState(queue);
+                Thread.Sleep(100);
             }
         }
 
@@ -73,14 +77,16 @@ namespace SpotifyClicker
             GpioPin[] pins = new GpioPin[DeviceOptions.Pins.Length];
             bool[] pressed = new bool[pins.Length];
             for (int i = 0; i < pins.Length; i++)
+            {
                 pins[i] = gpio.OpenPin(DeviceOptions.Pins[i], PinMode.InputPullUp);
+                pressed[i] = pins[i].Read() == PinValue.Low;
+            }
 
             ButtonEngine buttons = new ButtonEngine(command =>
             {
                 if (spotify.CanAcceptCommands)
                 {
                     queue.Push(command);
-                    Debug.WriteLine("Button queued: " + command.Kind);
                 }
                 else Debug.WriteLine("Not sent: Wi-Fi, Spotify authorization, or retry delay is not ready.");
             });
@@ -89,7 +95,12 @@ namespace SpotifyClicker
             Console.WriteLine("Spotify Clicker started with PC configuration.");
             while (true)
             {
-                for (int i = 0; i < pins.Length; i++) pressed[i] = pins[i].Read() == PinValue.Low;
+                for (int i = 0; i < pins.Length; i++)
+                {
+                    bool down = pins[i].Read() == PinValue.Low;
+                    if (down || down != pressed[i]) spotify.NotifyButtonActivity();
+                    pressed[i] = down;
+                }
                 buttons.Sample(pressed, Clock.Milliseconds);
                 if (network.Status != lastNetworkStatus)
                 {

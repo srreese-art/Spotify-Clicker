@@ -36,8 +36,21 @@ internal static class Program
         keys[1]=true; engine.Sample(keys,200); engine.Sample(keys,230); keys[1]=false; engine.Sample(keys,240); engine.Sample(keys,270);
         Check(emitted.Count==1 && emitted[0].Kind==CommandKind.Next,"single next on release");
         emitted.Clear(); keys=new bool[5]; engine=new ButtonEngine(c=>emitted.Add(c));
-        keys[3]=true; engine.Sample(keys,0); engine.Sample(keys,30); engine.Sample(keys,529); Check(emitted.Count==1,"volume hold delay"); engine.Sample(keys,530); engine.Sample(keys,830);
-        Check(emitted.Count==3 && emitted[2].Delta==5,"volume repeat");
+        keys[3]=true; engine.Sample(keys,0); engine.Sample(keys,30); engine.Sample(keys,499); Check(emitted.Count==1,"volume hold delay"); engine.Sample(keys,500); engine.Sample(keys,800);
+        Check(emitted.Count==3 && emitted[2].Delta==DeviceOptions.VolumeStep,"volume repeat");
+        emitted.Clear(); keys=new bool[5]; engine=new ButtonEngine(c=>emitted.Add(c));
+        keys[0]=true; engine.Sample(keys,0); keys[0]=false; engine.Sample(keys,10); engine.Sample(keys,40);
+        Check(emitted.Count==1,"short sampled tap registers without press delay");
+        keys[0]=true; engine.Sample(keys,50); keys[0]=false; engine.Sample(keys,55); keys[0]=true; engine.Sample(keys,60);
+        Check(emitted.Count==2,"release bounce cannot duplicate second press");
+        keys[0]=false;engine.Sample(keys,70);engine.Sample(keys,100);keys[0]=true;engine.Sample(keys,110);
+        Check(emitted.Count==3,"stable release rearms next tap");
+        emitted.Clear();keys=new bool[5];engine=new ButtonEngine(c=>emitted.Add(c));
+        keys[1]=true;engine.Sample(keys,0);keys[1]=false;engine.Sample(keys,10);engine.Sample(keys,40);
+        Check(emitted.Count==1 && emitted[0].Kind==CommandKind.Next,"short track tap fires on stable release");
+        emitted.Clear();keys=new bool[5];engine=new ButtonEngine(c=>emitted.Add(c));
+        keys[3]=true;engine.Sample(keys,0);keys[3]=false;engine.Sample(keys,500);engine.Sample(keys,530);
+        Check(emitted.Count==1,"no volume repeat while release is debouncing");
         foreach(int length in new[]{0,1,15,16,17,1000})
         {
             byte[] original=RandomNumberGenerator.GetBytes(length); byte[] encrypted=SettingsCipher.Seal(original);

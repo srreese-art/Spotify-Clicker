@@ -24,10 +24,12 @@ namespace SpotifyClicker
         public const int HoldMs = 500;
         public const int RepeatMs = 300;
         public const int CommandMaxAgeMs = 2500;
-        // Once dequeued, allow token refresh and a fresh playback query over TLS.
-        public const int CommandProcessingMs = 30000;
         public const int QueueCapacity = 8;
-        public const int VolumeStep = 5;
+        public const int VolumeStep = 10;
+        public const int PlaybackPollMs = 10000;
+        public const int PlaybackPollIdleMs = 2000;
+        public const int PlaybackPollRetryMs = 3000;
+        public const int PlaybackStateMaxAgeMs = 60000;
         public const string StorageDirectory = @"I:\SpotifyClicker";
     }
 }

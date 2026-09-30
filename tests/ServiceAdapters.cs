@@ -26,6 +26,7 @@ namespace SpotifyClicker.Spotify
         public static readonly List<string> Bodies=new List<string>();
         public static long BlockedUntil;
         public static long RequestDurationMs;
+        public static Action AfterResponse;
         public bool Available => Clock.Milliseconds>=BlockedUntil;
         public Reply Send(string url,string method,string body,string token)
         {
@@ -33,8 +34,9 @@ namespace SpotifyClicker.Spotify
             Clock.Milliseconds += RequestDurationMs;
             if(Replies.Count==0)throw new Exception("Unexpected HTTP request");
             Reply result=Replies.Dequeue(); if(result.Status==429)BlockedUntil=Clock.Milliseconds+result.RetrySeconds*1000;
+            Action after=AfterResponse; AfterResponse=null; after?.Invoke();
             return result;
         }
-        public static void Reset(){ Replies.Clear(); Requests.Clear(); Bodies.Clear(); BlockedUntil=0; Clock.Milliseconds=0; RequestDurationMs=0; }
+        public static void Reset(){ Replies.Clear(); Requests.Clear(); Bodies.Clear(); BlockedUntil=0; Clock.Milliseconds=0; RequestDurationMs=0; AfterResponse=null; }
     }
 }

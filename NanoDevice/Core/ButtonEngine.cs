@@ -16,7 +16,9 @@ namespace SpotifyClicker.Core
             for (int i = 0; i < 5; i++)
             {
                 if (_raw[i] != pressed[i]) { _raw[i] = pressed[i]; _changed[i] = now; }
-                if (_down[i] != _raw[i] && now - _changed[i] >= DeviceOptions.DebounceMs)
+                // Latch the first sampled press, including short taps. Require a
+                // stable release before rearming so contact bounce cannot retrigger.
+                if (_down[i] != _raw[i] && (_raw[i] || now - _changed[i] >= DeviceOptions.DebounceMs))
                 {
                     _down[i] = _raw[i];
                     if (_down[i])
@@ -29,7 +31,7 @@ namespace SpotifyClicker.Core
                 }
             }
             for (int i = 3; i < 5; i++)
-                if (_down[i] && now >= _repeat[i])
+                if (_down[i] && _raw[i] && now >= _repeat[i])
                 { Send(CommandKind.Volume, i == 3 ? DeviceOptions.VolumeStep : -DeviceOptions.VolumeStep, now); _repeat[i] = now + DeviceOptions.RepeatMs; }
         }
         private void Send(CommandKind kind, int delta, long now) { _emit(new Command(kind, delta, now)); }
